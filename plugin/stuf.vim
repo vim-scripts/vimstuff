@@ -483,22 +483,18 @@ endfunction
 " Patch 30 for vim 7.3 adds support for storing lists and dictionaries in 
 " viminfo file, so we do not need to join string anymore
 if (v:version==703 && has("patch30")) || v:version>703
-    function s:F.cmd.savehist()
-        if &viminfo=~'!'
+    function s:F.cmd.savehist(...)
+        if &viminfo=~'!' || !empty(a:000)
             for [key, value] in items(s:g.cmd.inputs)
-                if !exists('g:STUF_HISTORY_'.toupper(key))
-                    let g:STUF_HISTORY_{toupper(key)}=value.history
-                endif
+                let g:STUF_HISTORY_{toupper(key)}=value.history
             endfor
         endif
     endfunction
 else
-    function s:F.cmd.savehist()
-        if &viminfo=~'!'
+    function s:F.cmd.savehist(...)
+        if &viminfo=~'!' || !empty(a:000)
             for [key, value] in items(s:g.cmd.inputs)
-                if !exists('g:STUF_HISTORY_'.toupper(key))
-                    let g:STUF_HISTORY_{toupper(key)}=join(value.history, "\n")
-                endif
+                let g:STUF_HISTORY_{toupper(key)}=join(value.history, "\n")
             endfor
         endif
     endfunction
@@ -570,13 +566,13 @@ function s:F.cmd.geninput(name, prompt, Completion)
     if has_key(s:g.cmd.oldhist, a:name)
         call extend(entry.history, s:g.cmd.oldhist[a:name])
         unlet s:g.cmd.oldhist[a:name]
-    elseif exists('g:STUF_HISTORY_'.upname) &&
-                \type(g:STUF_HISTORY_{upname})==type("")
+    elseif exists('g:STUF_HISTORY_'.upname)
         let tsh=type(g:STUF_HISTORY_{upname})
         if tsh==type("")
             call extend(entry.history, split(g:STUF_HISTORY_{upname}, "\n"))
         elseif tsh==type([])
-            call extend(entry.history, g:STUF_HISTORY_{upname})
+            let entry.history=filter(g:STUF_HISTORY_{upname},
+                        \            'type(v:val)=='.type(""))
         endif
         unlet g:STUF_HISTORY_{upname}
     endif
@@ -616,6 +612,7 @@ function s:F.main.destruct()
     augroup StufStoreHistory
         autocmd!
     augroup END
+    call s:F.cmd.savehist(1)
     unlet s:g
     unlet s:F
     return 1
