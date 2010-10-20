@@ -2,10 +2,14 @@ This is a mirror of http://www.vim.org/scripts/script.php?script_id=3186
 
 This plugin contains some functions that can be useful for plugin developers and one command that may be useful to all users:
 
-- :SE command (:e replacement with zsh-like completion and multiple file arguments support)
-- Pure vimscript base64 decoder
-- Bitwise OR and AND functions (slow and unsigned integer only)
-- Some escaping and quoting functions
-- Function that prints table with higlighted header
-- Failsafe builtin `string()' replacement (for representation purposes only)
-- ...
+     :SE command (:e replacement with zsh-like completion and multiple file arguments support)
+     Pure vimscript base64 decoder
+     Bitwise OR and AND functions (slow and unsigned integer only)
+     Some escaping and quoting functions
+     Function that prints table with higlighted header
+     Failsafe builtin `string()' replacement (for representation purposes only)
+     ...
+
+Project page: http://sourceforge.net/projects/vimstuff
+Dependencies (you do not need to install them by yourself, see installation details):
+vimscript #3184, http://sourceforge.net/projects/vimpluginloader

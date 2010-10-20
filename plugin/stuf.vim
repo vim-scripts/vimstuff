@@ -480,15 +480,29 @@ function s:F.dct.recursivefilter(dict, expr)
 endfunction
 "{{{2 cmd
 "{{{3 cmd.savehist
-function s:F.cmd.savehist()
-    if &viminfo=~'!'
-        for [key, value] in items(s:g.cmd.inputs)
-            if !exists('g:STUF_HISTORY_'.toupper(key))
-                let g:STUF_HISTORY_{toupper(key)}=join(value.history, "\n")
-            endif
-        endfor
-    endif
-endfunction
+" Patch 30 for vim 7.3 adds support for storing lists and dictionaries in 
+" viminfo file, so we do not need to join string anymore
+if (v:version==703 && has("patch30")) || v:version>703
+    function s:F.cmd.savehist()
+        if &viminfo=~'!'
+            for [key, value] in items(s:g.cmd.inputs)
+                if !exists('g:STUF_HISTORY_'.toupper(key))
+                    let g:STUF_HISTORY_{toupper(key)}=value.history
+                endif
+            endfor
+        endif
+    endfunction
+else
+    function s:F.cmd.savehist()
+        if &viminfo=~'!'
+            for [key, value] in items(s:g.cmd.inputs)
+                if !exists('g:STUF_HISTORY_'.toupper(key))
+                    let g:STUF_HISTORY_{toupper(key)}=join(value.history, "\n")
+                endif
+            endfor
+        endif
+    endfunction
+endif
 augroup StufStoreHistory
     autocmd!
     autocmd VimLeavePre * call s:F.cmd.savehist()
@@ -552,13 +566,19 @@ function s:F.cmd.geninput(name, prompt, Completion)
                 \"history": [],
                 \"inputhistory": [],
             \}
+    let upname=toupper(a:name)
     if has_key(s:g.cmd.oldhist, a:name)
         call extend(entry.history, s:g.cmd.oldhist[a:name])
         unlet s:g.cmd.oldhist[a:name]
-    elseif exists('g:STUF_HISTORY_'.toupper(a:name)) &&
-                \type(g:STUF_HISTORY_{toupper(a:name)})==type("")
-        call extend(entry.history, split(g:STUF_HISTORY_{toupper(a:name)},"\n"))
-        unlet g:STUF_HISTORY_{toupper(a:name)}
+    elseif exists('g:STUF_HISTORY_'.upname) &&
+                \type(g:STUF_HISTORY_{upname})==type("")
+        let tsh=type(g:STUF_HISTORY_{upname})
+        if tsh==type("")
+            call extend(entry.history, split(g:STUF_HISTORY_{upname}, "\n"))
+        elseif tsh==type([])
+            call extend(entry.history, g:STUF_HISTORY_{upname})
+        endif
+        unlet g:STUF_HISTORY_{upname}
     endif
     let s:g.cmd.inputs[a:name]=entry
     if type(a:Completion)==2
